@@ -1,7 +1,7 @@
 void initializeServo() {
-    penServo.attach(servoPin);
+    penServo.attach(SERVO_PIN);
 
-    setPenPosition(0);
+    setPenPosition(1);
     movePenToPosition();
 }
 

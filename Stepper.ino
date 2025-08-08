@@ -1,9 +1,9 @@
 void initializeSteppers() {
-    motorA.attach(42, 38, 44, 40);
-    motorB.attach(34, 30, 36, 32);
+    motorA.attach(INA1, INA2, INA3, INA4);
+    motorB.attach(INB1, INB2, INB3, INB4);
 
-    motorA.setSpeed(maxMotorSpeed);
-    motorB.setSpeed(maxMotorSpeed);
+    motorA.setSpeed(motorSpeed);
+    motorB.setSpeed(motorSpeed);
 
     motorA.setRampLen(motorAccel);
     motorB.setRampLen(motorAccel);
@@ -12,34 +12,54 @@ void initializeSteppers() {
     motorB.attachEnable(5);
 }
 
-void moveToTarget(int targetX, int targetY) {
-    targetX = min(targetX, maxX);
-    targetX = max(targetX, 0);
-    targetY = min(targetY, maxY);
-    targetY = max(targetY, 0);
-    
-    int dX = targetX - curX;
-    int dY = targetY - curY;
-
-    int deltaA = dX + dY;
-    int deltaB = dX - dY;
-
-    motorA.move(deltaA);
-    motorB.move(deltaB);
-
-    curX = targetX;
-    curY = targetY;
+double clamp(double x, double low, double top) {
+    return min(max(x, low), top);
 }
 
-void moveSteppers(int dX, int dY) {
+double mmToSteps(double dist, double steps) {
+    return dist * steps;
+}
+
+void moveToTarget() {
+    targetX = clamp(targetX, 0, maxX);
+    targetY = clamp(targetY, 0, maxY);
+    
+    double dX = targetX - curX;
+    double dY = targetY - curY;
+
+    moveSteppers(dX, dY);
+}
+
+void moveToAndSetTarget(double x, double y) {
+    targetX = x;
+    targetY = y;
+
+    targetX = clamp(targetX, 0, maxX);
+    targetY = clamp(targetY, 0, maxY);
+    
+    double dX = targetX - curX;
+    double dY = targetY - curY;
+
+    moveSteppers(dX, dY);
+}
+
+void setTarget(double x, double y) {
+    targetX = x;
+    targetY = y;
+}
+
+void moveSteppers(double dX, double dY) {
     curX += dX;
     curY += dY;
 
-    int deltaA = dX + dY;
-    int deltaB = dX - dY;
+    double deltaA = dX + dY;
+    double deltaB = dX - dY;
 
-    motorA.move(deltaA);
-    motorB.move(deltaB);
+    double deltaASteps = mmToSteps(deltaA, stepsPerMMA);
+    double deltaBSteps = mmToSteps(deltaB, stepsPerMMB);
+
+    motorA.move(deltaASteps);
+    motorB.move(deltaBSteps);
 }
 
 void setMotorSpeeds(int speed) {
@@ -64,7 +84,7 @@ void homeSteppers() {
     while (!getXLimit()) {
         moveSteppers(-10, 0);
     }
-    curX = 0;
+    curX = 0.0;
     
     setMotorSpeeds(initalHomeSpeed);
     while (!getYLimit()) {
@@ -76,7 +96,7 @@ void homeSteppers() {
     while (!getYLimit()) {
         moveSteppers(0, -10);
     }
-    curY = 0;
+    curY = 0.0;
     
-    setMotorSpeeds(maxMotorSpeed);
+    setMotorSpeeds(motorSpeed);
 }

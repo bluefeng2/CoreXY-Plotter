@@ -1,41 +1,51 @@
+#define INPUT_BUFFER_SIZE 128
+
+char inputBuffer[INPUT_BUFFER_SIZE];
+int inputPos = 0;
+bool gotNewline = false;
+
 void readSerial() {
-    static String input = "";
-    if (Serial.available()) {
+    while (Serial.available() > 0) {
         char c = Serial.read();
+
         if (c == '\n' || c == '\r') {
-        if (input.length() > 0) {
-            handleInput(input);
-            input = "";
-        }
+            // Mark that a line ended
+            gotNewline = true;
         } else {
-        input += c;
+            // If gotNewline was true, it means we got a new line before processing previous
+            // So reset buffer to keep only latest line
+            if (gotNewline) {
+                inputPos = 0;
+                gotNewline = false;
+            }
+            if (inputPos < INPUT_BUFFER_SIZE - 1) {
+                inputBuffer[inputPos++] = c;
+            } else {
+                inputPos = 0;  // discard if overflow
+            }
         }
+    }
+
+    // If a newline was received, process the last line
+    if (gotNewline && inputPos > 0) {
+        inputBuffer[inputPos] = '\0';
+        handleInput(inputBuffer);
+        inputPos = 0;
+        gotNewline = false;
     }
 }
 
-void handleInput(String input) {
-    input.trim(); 
+void handleInput(const char* input) {
+    int a = 0, b = 0, c = 0;
+    int matched = sscanf(input, "%d %d %d", &a, &b, &c);
 
-    if (input == "HOMING") {
-        homeSteppers();
-    } else if (input == "GETPOSITION") {
-        Serial.print(curX); Serial.print(" "); Serial.println(curY);
-    } else {
-        int firstSpace = input.indexOf(' ');
-        int secondSpace = input.indexOf(' ', firstSpace + 1);
-
-        int a = input.substring(0, firstSpace).toInt();
-        int b = input.substring(firstSpace + 1, secondSpace).toInt();
-        int c = input.substring(secondSpace + 1).toInt();
-
+    if (matched == 3) {
         if (!isMoving()) {
-            moveToTarget(a, b);
+            moveToAndSetTarget(a, b);
         }
-        
-        if (c == 1) {
-            setPenPosition(true);
-        } else {
-            setPenPosition(false);
-        }
+        setPenPosition(c == 1);
+    } else {
+        Serial.println("Invalid input");
     }
 }
+

@@ -1,12 +1,12 @@
 void initializeLimitSwitches() {
-    pinMode(xLimitPin, INPUT_PULLUP);
-    pinMode(yLimitPin, INPUT_PULLUP);
+    pinMode(X_LIMIT_PIN, INPUT_PULLUP);
+    pinMode(Y_LIMIT_PIN, INPUT_PULLUP);
 }
 
 boolean getXLimit() {
-    return !digitalRead(xLimitPin);
+    return !digitalRead(X_LIMIT_PIN);
 }
 
 boolean getYLimit() {
-    return !digitalRead(yLimitPin);
+    return !digitalRead(Y_LIMIT_PIN);
 }
